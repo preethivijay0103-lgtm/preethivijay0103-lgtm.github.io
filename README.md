@@ -1,32 +1,56 @@
-# React + TypeScript + Vite
+# Breakfast box website
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A simple website for the breakfast box (Monday to Friday). Customers see the menu, photos and prices,
+fill in a short form, and the order opens in WhatsApp. Payment is taken on WhatsApp by UPI.
 
-Currently, two official plugins are available:
+## Before going live
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+1. Open `src/config/brand.ts` and set:
+   - `name`: the brand name.
+   - `whatsappNumber`: your WhatsApp number with country code, digits only (e.g. `919876543210`).
+   - `pickupArea`: the area shown in the footer (the exact address is shared on WhatsApp).
+2. Replace the photos in `public/images` with photos of your real boxes. Keep the same file names:
+   `hero.jpg`, `mon.jpg`, `tue.jpg`, `wed.jpg`, `thu.jpg`, `fri.jpg`.
+3. Menu, portions, drinks and prices are all in `src/features/catalog/data.ts`.
+4. Cancellation policy text is in `src/pages/Policy.tsx`.
 
-## React Compiler
+## Run it on your computer
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev      # opens at http://localhost:5173
+npx vitest run   # runs the checks
+npm run build    # makes the site in dist/
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## Put it online (free)
+
+**Netlify:** sign in at netlify.com, choose "Add new site", then "Deploy manually", and drag the
+`dist` folder in. Or connect a GitHub repo with build command `npm run build` and publish folder `dist`.
+
+**Vercel:** sign in at vercel.com, import the repo, and keep the defaults (Vite is detected).
+
+Both are already set up so links like `/menu` work when opened directly.
+
+## Optional: keep a list of customers in Google Sheets
+
+1. Make a Google Sheet, then Extensions, Apps Script, and paste:
+
+   ```js
+   function doPost(e) {
+     const data = JSON.parse(e.postData.contents)
+     SpreadsheetApp.getActiveSheet().appendRow([
+       data.sentAt, data.name, data.phone, data.area, data.size, data.diet,
+       data.eatsEgg, data.plan, data.start, data.total, data.notes,
+     ])
+     return ContentService.createTextOutput('ok')
+   }
+   ```
+
+2. Deploy it as a web app (access: anyone) and paste the URL into `sheetWebhookUrl` in
+   `src/config/brand.ts`.
+
+## Later, at more than 50 customers
+
+Add the full box to `data.ts`, then phone OTP login, online payment (Razorpay), "My orders" with
+skip-a-day, and an admin page with the 9 pm count.
