@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+@theme {
+  --color-leaf-950: #0B2E1A;
+  --color-leaf-900: #14532D;
+  --color-leaf-700: #166534;
+  --color-leaf-600: #16A34A;
+  --color-leaf-100: #DCFCE7;
+  --color-leaf-50: #F0FDF4;
+
+  --color-spice-800: #9A3412;
+  --color-spice-600: #EA580C;
+  --color-spice-100: #FFEDD5;
+  --color-spice-50: #FFF7ED;
+
+  --color-cream: #FFFBF2;
+  --color-ink: #1C1917;
+
+  --font-display: "Fraunces", Georgia, serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-cream text-ink font-sans antialiased;
+}
+
+h1,
+h2,
+h3 {
+  @apply font-display;
+}
