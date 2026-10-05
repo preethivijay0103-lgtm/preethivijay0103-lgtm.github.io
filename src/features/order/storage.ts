@@ -4,7 +4,7 @@ const KEY = 'breakfast-order-details'
 
 export type SavedDetails = Pick<
   OrderDetails,
-  'name' | 'phone' | 'area' | 'size' | 'diet' | 'eatsEgg' | 'notes'
+  'name' | 'phone' | 'area' | 'size' | 'diet' | 'eatsEgg' | 'drink' | 'notes'
 >
 
 export function loadDetails(): Partial<SavedDetails> {

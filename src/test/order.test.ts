@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { WEEK, compartmentsFor, planTotal } from '../features/catalog/data'
+import { WEEK, compartmentsFor, photoFor, planTotal } from '../features/catalog/data'
 import { earliestStart, formatDay, isValidStart, planDates, startOptions } from '../features/order/dates'
 import { orderMessage, whatsappUrl } from '../features/order/whatsapp'
 
@@ -10,10 +10,10 @@ function ist(y: number, m: number, d: number, h: number, min = 0): Date {
 
 describe('prices', () => {
   it('totals each size and plan, drink included', () => {
-    expect(planTotal('lean', 'trial')).toBe(387)
-    expect(planTotal('lean', 'week')).toBe(645)
-    expect(planTotal('build', 'trial')).toBe(477)
-    expect(planTotal('build', 'week')).toBe(795)
+    expect(planTotal('lean', 'trial')).toBe(396)
+    expect(planTotal('lean', 'week')).toBe(660)
+    expect(planTotal('build', 'trial')).toBe(459)
+    expect(planTotal('build', 'week')).toBe(765)
   })
 })
 
@@ -53,13 +53,49 @@ describe('dates', () => {
   })
 })
 
-describe('compartments', () => {
-  it('gives Lean 4 compartments and Build 3 with the salad beside the protein', () => {
+describe('item nutrition', () => {
+  it('shows Lean with fewer kcal than Build on mains', async () => {
+    const { factsFor } = await import('../features/catalog/itemDetails')
     const monday = WEEK[0]
-    expect(compartmentsFor(monday, 'lean', 'veg')).toHaveLength(4)
+    const lean = factsFor(monday, 'lean', 'veg', 'Main')
+    const build = factsFor(monday, 'build', 'veg', 'Main')
+    expect(lean?.ingredients.map((item) => item.name)).toEqual([
+      'Black chana',
+      'Green gram',
+      'Pearl millet',
+      'Toor dal',
+      'Urad dal',
+    ])
+    expect(lean?.kcal).toBe(208)
+    expect(build?.kcal).toBe(303)
+    expect(lean!.kcal).toBeLessThan(build!.kcal)
+  })
+})
+
+describe('compartments', () => {
+  it('lists main, salad, and protein for Lean and Build', () => {
+    const monday = WEEK[0]
+    expect(compartmentsFor(monday, 'lean', 'veg').map((part) => part.label)).toEqual([
+      'Main',
+      'Side',
+      'Protein',
+      'Sauce',
+      'Salad',
+    ])
     const build = compartmentsFor(monday, 'build', 'veg')
-    expect(build).toHaveLength(3)
-    expect(build[1].items).toEqual(['Paneer tikka, 80 g', 'Carrot and cucumber'])
+    expect(build[0].items[0]).toBe('Sprout dosa, 3 dosas')
+    expect(build[1].items).toEqual(['Peanut chutney'])
+    expect(build[2].items).toEqual(['Palak paneer, rajma'])
+    expect(build[3].items).toEqual(['Chipotle sauce'])
+  })
+})
+
+describe('photos', () => {
+  it('changes the photo when diet or size changes', () => {
+    const monday = WEEK[0]
+    expect(photoFor(monday, 'lean', 'veg')).toBe('/images/mon-lean-veg-4.jpg?v=15')
+    expect(photoFor(monday, 'lean', 'nonveg')).toBe('/images/mon-lean-nonveg-4.jpg?v=15')
+    expect(photoFor(monday, 'build', 'veg')).toBe('/images/mon-build-veg-4.jpg?v=15')
   })
 })
 
@@ -71,6 +107,7 @@ describe('WhatsApp message', () => {
     size: 'lean' as const,
     diet: 'veg' as const,
     eatsEgg: false,
+    drink: 'day' as const,
     plan: 'trial' as const,
     start: '2026-09-29',
     notes: '',
@@ -85,8 +122,9 @@ describe('WhatsApp message', () => {
         'Area: HSR PG',
         'Size: Lean',
         'Diet: Veg',
+        "Drink: the day's drink",
         'Plan: 3-day trial, Tue 29 Sep to Thu 1 Oct',
-        'Total: ₹387',
+        'Total: ₹396',
         'Allergies or notes: none',
         'Cancellation policy: accepted',
       ].join('\n'),

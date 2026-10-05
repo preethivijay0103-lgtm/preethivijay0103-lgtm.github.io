@@ -4,8 +4,10 @@ import { Home } from './pages/Home'
 import { HowItWorks } from './pages/HowItWorks'
 import { Menu } from './pages/Menu'
 import { Policy } from './pages/Policy'
+import { PrivacyPolicy } from './pages/PrivacyPolicy'
 import { Prices } from './pages/Prices'
 import { Register } from './pages/Register'
+import { TermsAndConditions } from './pages/TermsAndConditions'
 import { Section } from './ui'
 
 function NotFound() {
@@ -29,6 +31,8 @@ export default function App() {
           <Route path="how-it-works" element={<HowItWorks />} />
           <Route path="register" element={<Register />} />
           <Route path="cancellation-policy" element={<Policy />} />
+          <Route path="terms-and-conditions" element={<TermsAndConditions />} />
+          <Route path="privacy-policy" element={<PrivacyPolicy />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

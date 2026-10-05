@@ -6,7 +6,7 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import * as yup from 'yup'
 import { brand } from '../config/brand'
-import { DIETS, PLANS, PRICE_PER_DAY, SIZES, formatRupees, planTotal } from '../features/catalog/data'
+import { DIETS, LAUNCH_OFF_PERCENT, PLANS, SIZES, formatRupees, planTotal, salePricePerDay } from '../features/catalog/data'
 import type { Diet, PlanId, Size } from '../features/catalog/data'
 import { formatDay, isValidStart, planDates, startOptions } from '../features/order/dates'
 import { loadDetails, saveDetails } from '../features/order/storage'
@@ -35,7 +35,7 @@ const schema = yup.object({
       Boolean(value && isValidStart(value, new Date())),
     ),
   notes: yup.string().max(300, 'Please keep notes under 300 characters'),
-  policy: yup.boolean().oneOf([true], 'Please accept the cancellation policy'),
+  policy: yup.boolean().oneOf([true], 'Please accept the Terms, Privacy Policy, and cancellation policy'),
 })
 
 function FieldError({
@@ -80,6 +80,7 @@ export function Register() {
     size: saved.size ?? 'lean',
     diet: saved.diet ?? 'nonveg',
     eatsEgg: saved.eatsEgg ?? false,
+    drink: 'day',
     plan: 'trial',
     start: options[0],
     notes: saved.notes ?? '',
@@ -133,6 +134,7 @@ export function Register() {
             size: values.size,
             diet: values.diet,
             eatsEgg: values.eatsEgg,
+            drink: 'day',
             notes: values.notes.trim(),
           })
           sendToSheet(order)
@@ -178,7 +180,7 @@ export function Register() {
                     id="area"
                     name="area"
                     className={inputClass}
-                    placeholder="e.g. HSR Sector 2, or the gym you go to"
+                    placeholder="e.g. Choodasandra, or the gym you go to"
                   />
                   <FieldError name="area" errors={errors} touched={touched} />
                 </div>
@@ -191,8 +193,8 @@ export function Register() {
                         key={size}
                         selected={values.size === size}
                         onSelect={() => setFieldValue('size', size)}
-                        title={`${SIZES[size].label}, ${formatRupees(PRICE_PER_DAY[size])} a day`}
-                        text={SIZES[size].blurb}
+                        title={`${SIZES[size].label} — ${SIZES[size].proteinGrams} g protein`}
+                        text={`${formatRupees(salePricePerDay(size))} a day. ${SIZES[size].blurb}`}
                       />
                     ))}
                   </div>
@@ -269,7 +271,7 @@ export function Register() {
                       {formatRupees(planTotal(values.size, values.plan))}
                     </p>
                     <p className="mt-1 text-sm text-leaf-100">
-                      {PLANS[values.plan].days} x {formatRupees(PRICE_PER_DAY[values.size])}, drink included
+                      {PLANS[values.plan].days} x {formatRupees(salePricePerDay(values.size))}, {LAUNCH_OFF_PERCENT}% off while we start
                     </p>
                   </div>
                   <dl className="space-y-2 p-6 text-sm">
@@ -279,15 +281,24 @@ export function Register() {
                       label="Food"
                       value={values.diet === 'veg' && values.eatsEgg ? 'Veg (eats egg)' : DIETS[values.diet].label}
                     />
+                    <Row label="Drink" value="That day's drink" />
                     <Row label="Plan" value={PLANS[values.plan].label} />
                     <Row label="Days" value={dates.map(formatDay).join(', ')} />
-                    <Row label="Pickup" value={`Our gate, ${brand.pickupHours}`} />
+                    <Row label="Pickup" value={`Gym ${brand.pickupHours}, or delivery ${brand.deliveryHours}`} />
                   </dl>
                   <div className="space-y-4 border-t border-stone-100 p-6">
                     <label className="flex items-start gap-3 text-sm text-stone-700">
                       <Field type="checkbox" name="policy" className="mt-0.5 h-5 w-5 shrink-0 accent-leaf-700" />
                       <span>
                         I have read and accept the{' '}
+                        <Link to="/terms-and-conditions" target="_blank" className="font-semibold text-leaf-900 underline">
+                          Terms and Conditions
+                        </Link>
+                        ,{' '}
+                        <Link to="/privacy-policy" target="_blank" className="font-semibold text-leaf-900 underline">
+                          Privacy Policy
+                        </Link>
+                        , and{' '}
                         <Link to="/cancellation-policy" target="_blank" className="font-semibold text-leaf-900 underline">
                           cancellation policy
                         </Link>

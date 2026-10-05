@@ -10,7 +10,8 @@ fill in a short form, and the order opens in WhatsApp. Payment is taken on Whats
    - `whatsappNumber`: your WhatsApp number with country code, digits only (e.g. `919876543210`).
    - `pickupArea`: the area shown in the footer (the exact address is shared on WhatsApp).
 2. Replace the photos in `public/images` with photos of your real boxes. Keep the same file names:
-   `hero.jpg`, `mon.jpg`, `tue.jpg`, `wed.jpg`, `thu.jpg`, `fri.jpg`.
+   `hero.jpg` and `{day}-{lean|build}-{veg|nonveg}.jpg` (for example `mon-lean-veg.jpg`).
+   Lean photos are the 4-partition tray; Build photos are the 3-partition tray.
 3. Menu, portions, drinks and prices are all in `src/features/catalog/data.ts`.
 4. Cancellation policy text is in `src/pages/Policy.tsx`.
 

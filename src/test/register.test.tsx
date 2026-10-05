@@ -24,11 +24,11 @@ describe('Register', () => {
 
   it('updates the total when the size and plan change', async () => {
     renderRegister()
-    expect(screen.getAllByText('₹387').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('₹396').length).toBeGreaterThan(0)
 
-    await userEvent.click(screen.getByRole('radio', { name: /build, ₹159 a day/i }))
+    await userEvent.click(screen.getByRole('radio', { name: /build — 50 g protein/i }))
     await userEvent.click(screen.getByRole('radio', { name: /5-day week/i }))
-    expect(screen.getAllByText('₹795').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('₹765').length).toBeGreaterThan(0)
   })
 
   it('shows the egg option only for veg', async () => {

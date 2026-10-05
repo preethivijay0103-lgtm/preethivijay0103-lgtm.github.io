@@ -7,25 +7,28 @@ export interface DayMenu {
   id: 'mon' | 'tue' | 'wed' | 'thu' | 'fri'
   short: string
   name: string
-  image: string
+  images: Record<Size, Record<Diet, string>>
   main: BySize
-  cup?: string
   protein: Record<Diet, BySize>
-  side: BySize
+  proteinGrams: Record<Diet, Record<Size, number>>
   salad: BySize
-  drink: { name: string; ml: Record<Size, number> }
+  side: Record<Diet, string>
+  sauce: string
+  drink: { name: string }
 }
 
-export const SIZES: Record<Size, { label: string; blurb: string; compartments: number }> = {
+export const SIZES: Record<Size, { label: string; blurb: string; compartments: number; proteinGrams: number }> = {
   lean: {
     label: 'Lean',
-    blurb: 'Lighter portions for cutting or staying trim.',
+    blurb: 'A lighter, balanced box for everyday mornings.',
     compartments: 4,
+    proteinGrams: 40,
   },
   build: {
     label: 'Build',
-    blurb: 'Bigger portions and more protein for gaining muscle.',
-    compartments: 3,
+    blurb: 'A fuller box with more protein and a bigger portion.',
+    compartments: 4,
+    proteinGrams: 50,
   },
 }
 
@@ -34,7 +37,32 @@ export const DIETS: Record<Diet, { label: string }> = {
   nonveg: { label: 'Non-veg' },
 }
 
-export const PRICE_PER_DAY: Record<Size, number> = { lean: 129, build: 159 }
+export const PRICE_PER_DAY: Record<Size, number> = { lean: 189, build: 219 }
+
+/** Launch offer while we start. Checkout uses the sale price. */
+export const LAUNCH_OFF_PERCENT = 30
+
+export function salePricePerDay(size: Size): number {
+  return Math.round((PRICE_PER_DAY[size] * (100 - LAUNCH_OFF_PERCENT)) / 100)
+}
+
+export type DrinkId = 'day' | 'buttermilk' | 'juice' | 'kanji' | 'shake' | 'smoothie'
+
+export const DRINKS: Record<DrinkId, { label: string; note: string }> = {
+  day: {
+    label: "Follow the day's drink",
+    note: 'Mon fermented rice porridge, Tue fruit juice, Wed fermented pearl millet porridge, Thu fermented finger millet porridge, Fri buttermilk.',
+  },
+  buttermilk: { label: 'Buttermilk', note: 'Every morning. Dairy.' },
+  juice: { label: 'Fruit juice', note: 'Every morning.' },
+  kanji: { label: 'Fermented millet porridge', note: 'Every morning. Millet drink.' },
+  shake: { label: 'Peanut-almond shake', note: 'Every morning. Contains nuts.' },
+  smoothie: { label: 'Fruit smoothie', note: 'Every morning. Usually dairy.' },
+}
+
+export function drinkLabel(drink: DrinkId): string {
+  return drink === 'day' ? DRINKS.day.label : `${DRINKS[drink].label} every day`
+}
 
 export type PlanId = 'trial' | 'week'
 
@@ -48,77 +76,117 @@ export const WEEK: DayMenu[] = [
     id: 'mon',
     short: 'Mon',
     name: 'Monday',
-    image: '/images/mon.jpg',
-    main: { lean: 'Sprout dosa, 2', build: 'Sprout dosa, 3' },
-    cup: 'Ginger chutney',
-    protein: {
-      nonveg: { lean: 'Egg, cooked flat on the tawa, 1', build: 'Egg, cooked flat on the tawa, 2' },
-      veg: { lean: 'Paneer tikka, 50 g', build: 'Paneer tikka, 80 g' },
+    images: {
+      lean: { veg: '/images/mon-lean-veg-4.jpg', nonveg: '/images/mon-lean-nonveg-4.jpg' },
+      build: { veg: '/images/mon-build-veg-4.jpg', nonveg: '/images/mon-build-nonveg-4.jpg' },
     },
-    side: { lean: 'Badam laddu', build: 'Badam laddu' },
-    salad: { lean: 'Carrot and cucumber sticks', build: 'Carrot and cucumber' },
-    drink: { name: 'Buttermilk', ml: { lean: 200, build: 200 } },
+    main: { lean: 'Sprout dosa, 2 dosas', build: 'Sprout dosa, 3 dosas' },
+    protein: {
+      nonveg: { lean: 'Pepper chicken', build: 'Pepper chicken, boiled egg' },
+      veg: { lean: 'Palak paneer', build: 'Palak paneer, rajma' },
+    },
+    proteinGrams: { nonveg: { lean: 40.7, build: 50.5 }, veg: { lean: 41.0, build: 50.3 } },
+    salad: {
+      lean: 'Kala chana & peanut salad',
+      build: 'Kala chana & peanut salad',
+    },
+    side: { veg: 'Peanut chutney', nonveg: 'Peanut chutney' },
+    sauce: 'Chipotle sauce',
+    drink: { name: 'Fermented Rice Porridge' },
   },
   {
     id: 'tue',
     short: 'Tue',
     name: 'Tuesday',
-    image: '/images/tue.jpg',
-    main: { lean: 'Paddu, 5', build: 'Paddu, 8' },
-    cup: 'Ginger chutney',
-    protein: {
-      nonveg: { lean: 'Grilled chicken, 75 g', build: 'Grilled chicken, 110 g' },
-      veg: { lean: 'Sprouts chaat, ¾ cup', build: 'Sprouts chaat, 1¼ cups' },
+    images: {
+      lean: { veg: '/images/tue-lean-veg-4.jpg', nonveg: '/images/tue-lean-nonveg-4.jpg' },
+      build: { veg: '/images/tue-build-veg-4.jpg', nonveg: '/images/tue-build-nonveg-4.jpg' },
     },
-    side: { lean: 'Whole fruit, cut', build: 'Whole fruit, cut' },
-    salad: { lean: 'Kachumber: onion, tomato, cucumber', build: 'Kachumber' },
-    drink: { name: 'Fruit juice', ml: { lean: 150, build: 150 } },
+    main: { lean: 'Millet upma', build: 'Millet upma' },
+    protein: {
+      nonveg: { lean: 'Chicken tikka', build: 'Chicken tikka' },
+      veg: { lean: 'Paneer tikka', build: 'Paneer tikka' },
+    },
+    proteinGrams: { nonveg: { lean: 42.6, build: 52.9 }, veg: { lean: 40.4, build: 50.2 } },
+    salad: {
+      lean: 'Sprout & rajma salad',
+      build: 'Sprout & rajma salad',
+    },
+    side: { veg: 'Coconut chutney', nonveg: 'Coconut chutney' },
+    sauce: 'Chipotle sauce',
+    drink: { name: 'Fruit Juice' },
   },
   {
     id: 'wed',
     short: 'Wed',
     name: 'Wednesday',
-    image: '/images/wed.jpg',
-    main: { lean: 'Ragi idiyappam, 3', build: 'Ragi idiyappam, 5' },
-    protein: {
-      nonveg: { lean: 'Moringa with egg, 1 egg', build: 'Moringa with egg, 2 eggs' },
-      veg: { lean: 'Paneer pepper fry, 50 g', build: 'Paneer pepper fry, 80 g' },
+    images: {
+      lean: { veg: '/images/wed-lean-veg-4.jpg', nonveg: '/images/wed-lean-nonveg-4.jpg' },
+      build: { veg: '/images/wed-build-veg-4.jpg', nonveg: '/images/wed-build-nonveg-4.jpg' },
     },
-    side: { lean: 'Bottle gourd cutlet, 1', build: 'Bottle gourd cutlet, 2' },
-    salad: { lean: 'Cucumber slices', build: 'Cucumber slices' },
-    drink: { name: 'Millet kanji', ml: { lean: 200, build: 250 } },
+    main: {
+      lean: 'Sweet potato pancake, 1',
+      build: 'Sweet potato pancake, 3',
+    },
+    protein: {
+      nonveg: { lean: 'Broccoli omelette', build: 'Broccoli omelette' },
+      veg: { lean: 'Soya chunks', build: 'Soya chunks' },
+    },
+    proteinGrams: { nonveg: { lean: 40.4, build: 50.5 }, veg: { lean: 42.5, build: 50.4 } },
+    salad: {
+      lean: 'Black bean & corn salad',
+      build: 'Black bean & corn salad',
+    },
+    side: { veg: 'Curd', nonveg: 'Curd' },
+    sauce: 'Chipotle sauce',
+    drink: { name: 'Fermented Pearl Millet Porridge' },
   },
   {
     id: 'thu',
     short: 'Thu',
     name: 'Thursday',
-    image: '/images/thu.jpg',
-    main: { lean: 'Moong dal dosa, 2', build: 'Moong dal dosa, 3' },
-    cup: 'Curd or ginger chutney',
-    protein: {
-      nonveg: { lean: 'Broccoli omelette, 2 eggs', build: 'Broccoli omelette, 3 eggs' },
-      veg: { lean: 'Peanut or chana sundal, ½ cup', build: 'Peanut or chana sundal, ¾ cup' },
+    images: {
+      lean: { veg: '/images/thu-lean-veg-4.jpg', nonveg: '/images/thu-lean-nonveg-4.jpg' },
+      build: { veg: '/images/thu-build-veg-4.jpg', nonveg: '/images/thu-build-nonveg-4.jpg' },
     },
-    side: { lean: 'Sesame laddu', build: 'Sesame laddu' },
-    salad: { lean: 'Beetroot and carrot, grated', build: 'Beetroot and carrot' },
-    drink: { name: 'Peanut-badam shake', ml: { lean: 200, build: 250 } },
+    main: {
+      lean: 'Oats paniyaram, 4',
+      build: 'Oats paniyaram, 8',
+    },
+    protein: {
+      nonveg: { lean: 'Boiled eggs', build: 'Boiled eggs' },
+      veg: { lean: 'Soya sweet potato cutlet', build: 'Soya sweet potato cutlet' },
+    },
+    proteinGrams: { nonveg: { lean: 40.7, build: 50.6 }, veg: { lean: 40.3, build: 51.7 } },
+    salad: {
+      lean: 'Soybean & beetroot salad',
+      build: 'Soybean & beetroot salad',
+    },
+    side: { veg: 'Chutney', nonveg: 'Chutney' },
+    sauce: 'Chipotle sauce',
+    drink: { name: 'Fermented Finger Millet Porridge' },
   },
   {
     id: 'fri',
     short: 'Fri',
     name: 'Friday',
-    image: '/images/fri.jpg',
-    main: { lean: 'Millet upma, 1 cup', build: 'Millet upma, 1½ cups' },
-    protein: {
-      nonveg: {
-        lean: 'Grilled chicken, 75 g (fish after week 2)',
-        build: 'Grilled chicken, 110 g (fish after week 2)',
-      },
-      veg: { lean: 'Soy pepper, 25 g dry', build: 'Soy pepper, 40 g dry' },
+    images: {
+      lean: { veg: '/images/fri-lean-veg-4.jpg', nonveg: '/images/fri-lean-nonveg-4.jpg' },
+      build: { veg: '/images/fri-build-veg-4.jpg', nonveg: '/images/fri-build-nonveg-4.jpg' },
     },
-    side: { lean: 'Fruit salad, ½ cup', build: 'Fruit salad, ¾ cup' },
-    salad: { lean: 'Cucumber and carrot sticks', build: 'Cucumber and carrot' },
-    drink: { name: 'Fruit smoothie', ml: { lean: 200, build: 250 } },
+    main: { lean: 'Ragi idiyappam, 2', build: 'Ragi idiyappam, 6' },
+    protein: {
+      nonveg: { lean: 'Grilled chicken', build: 'Grilled chicken' },
+      veg: { lean: 'Spinach paneer', build: 'Spinach paneer' },
+    },
+    proteinGrams: { nonveg: { lean: 41.1, build: 50.5 }, veg: { lean: 40.6, build: 50.3 } },
+    salad: {
+      lean: 'Sprout & sweet potato salad',
+      build: 'Sprout & sweet potato salad',
+    },
+    side: { veg: 'Coconut milk', nonveg: 'Coconut milk' },
+    sauce: 'Chipotle sauce',
+    drink: { name: 'Buttermilk' },
   },
 ]
 
@@ -127,27 +195,22 @@ export interface Compartment {
   items: string[]
 }
 
-// Lean has 4 compartments; Build has 3, with the salad packed beside the protein.
+export function photoFor(day: DayMenu, size: Size, diet: Diet): string {
+  return `${day.images[size][diet]}?v=15`
+}
+
 export function compartmentsFor(day: DayMenu, size: Size, diet: Diet): Compartment[] {
-  const main = day.cup ? [day.main[size], `${day.cup} (lidded cup)`] : [day.main[size]]
-  const protein = day.protein[diet][size]
-  if (size === 'lean') {
-    return [
-      { label: 'Main', items: main },
-      { label: 'Protein', items: [protein] },
-      { label: 'Side', items: [day.side.lean] },
-      { label: 'Salad', items: [day.salad.lean] },
-    ]
-  }
   return [
-    { label: 'Main', items: main },
-    { label: 'Protein + salad', items: [protein, day.salad.build] },
-    { label: 'Side', items: [day.side.build] },
+    { label: 'Main', items: [day.main[size]] },
+    { label: 'Side', items: [day.side[diet]] },
+    { label: 'Protein', items: [day.protein[diet][size]] },
+    { label: 'Sauce', items: [day.sauce] },
+    { label: 'Salad', items: [day.salad[size]] },
   ]
 }
 
 export function planTotal(size: Size, plan: PlanId): number {
-  return PRICE_PER_DAY[size] * PLANS[plan].days
+  return salePricePerDay(size) * PLANS[plan].days
 }
 
 export function formatRupees(amount: number): string {
