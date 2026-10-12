@@ -55,8 +55,9 @@ export function BrandLogo({ size = 'sm', tone = 'dark' }: Props) {
     probe.src = brand.logoSrc
   }, [])
 
-  if (!imageOk) {
-    return <Wordmark size={size} tone={tone} />
+  /** PNG is dark-on-cream; on plum use the cream wordmark so Lite stays readable. */
+  if (tone === 'light' || !imageOk) {
+    return <Wordmark size={size} tone={tone === 'light' ? 'light' : 'dark'} />
   }
 
   return (

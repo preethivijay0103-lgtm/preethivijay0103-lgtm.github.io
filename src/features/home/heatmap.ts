@@ -7,6 +7,7 @@ export type HomeZoneId =
   | 'pricing'
   | 'steps'
   | 'voices'
+  | 'faq'
   | 'closing'
 
 export type HomeZoneMeta = {
@@ -50,6 +51,11 @@ export const HOME_ZONES: Record<HomeZoneId, HomeZoneMeta> = {
     intensity: 2,
     label: 'Social proof',
     action: 'Lower scroll; optional',
+  },
+  faq: {
+    intensity: 2,
+    label: 'FAQ accordion',
+    action: 'Answer pickup and cutoff before trial',
   },
   closing: {
     intensity: 4,

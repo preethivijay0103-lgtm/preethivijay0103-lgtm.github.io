@@ -1,4 +1,4 @@
-import { ChevronDown, Dumbbell, Drumstick, Flame, GlassWater, Layers, Leaf, Salad, Soup } from 'lucide-react'
+import { ChevronDown, Dumbbell, Drumstick, Flame, GlassWater, Heart, Layers, Salad, Soup } from 'lucide-react'
 import { useState, type ComponentType } from 'react'
 import { compartmentsFor } from '../features/catalog/data'
 import { factsFor } from '../features/catalog/itemDetails'
@@ -32,7 +32,7 @@ export function BoxDiagram({ day, size, diet }: { day: DayMenu; size: Size; diet
   })
 
   return (
-    <div className="divide-y divide-[#eee5e1]" aria-label="What is in the box">
+    <div className="divide-y divide-[#eadfd9]" aria-label="What is in the box">
       {rows.map((row) => (
         <MenuRow
           key={row.key}
@@ -72,77 +72,77 @@ function MenuRow({
   const Icon = ICONS[iconKey] ?? Layers
 
   return (
-    <div className={highlight ? 'bg-[#fcf1f6]' : 'bg-white'}>
+    <div className="bg-white">
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={open}
         className="flex w-full cursor-pointer items-center gap-3 px-3 py-2.5 text-left md:min-h-16 md:gap-4 md:px-5 md:py-3"
       >
-        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#faeaf1] text-[#6b245f] md:h-11 md:w-11">
+        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#c7ec16]/45 text-leaf-900 md:h-11 md:w-11">
           <Icon size={18} />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-bold tracking-[0.12em] text-[#6b245f] uppercase">{label}</p>
-          <p className={`mt-0.5 leading-tight text-[#54104d] ${highlight ? 'text-lg font-bold' : 'text-base font-semibold'}`}>
+          <p className="text-[11px] font-bold tracking-[0.12em] text-leaf-900/55 uppercase">{label}</p>
+          <p className={`mt-0.5 leading-tight text-leaf-900 ${highlight ? 'text-lg font-bold' : 'text-base font-semibold'}`}>
             {value}
           </p>
-          {highlights ? <p className="mt-1 text-xs leading-5 text-[#8a6278]">{highlights}</p> : null}
-          <p className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-[#8a4a7c]">
-            Protein & kcal
-            <ChevronDown size={14} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
-          </p>
+          {!open ? (
+            <p className="mt-1 text-xs font-semibold text-leaf-900/55">Tap for protein & kcal</p>
+          ) : null}
         </div>
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white text-[#54104d] ring-1 ring-[#eadfd9]" aria-hidden>
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white text-leaf-900 ring-1 ring-[#eadfd9]" aria-hidden>
           <ChevronDown size={20} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
         </span>
       </button>
 
-      {open && facts && (
+      {open && (facts || highlights) && (
         <div className="px-3 pb-3 md:px-5">
-          <div className="rounded-2xl bg-[#fff8f4] px-4 py-4">
-            <p className="flex items-center gap-1.5 text-[10px] font-semibold tracking-[0.16em] text-[#b0899c] uppercase">
-              <Leaf size={12} />
-              What&apos;s inside
-            </p>
-            <div className="mt-2 flex flex-wrap items-center text-[12px] font-medium leading-5 text-[#8a6278]">
-              {facts.ingredients.map((item, index) => (
-                <span key={`${item.name}-${index}`} className="inline-flex items-center">
-                  {index > 0 ? <span className="mx-2 text-[#e2c9d4]" aria-hidden>
-                    |
-                  </span> : null}
-                  <span>
-                    {item.name}
-                    {facts.showGrams && item.amount ? (
-                      <span className="ml-1 text-[11px] font-semibold text-[#6b245f]">{item.amount}</span>
-                    ) : null}
+          <div className="rounded-2xl bg-white px-3.5 py-3.5 ring-1 ring-[#eadfd9]">
+            {facts ? (
+              <p className="flex items-end justify-between gap-3 text-leaf-900">
+                <span className="flex items-baseline gap-1.5">
+                  <Dumbbell size={16} className="mb-0.5 shrink-0 text-leaf-900" />
+                  <span className="font-display text-[1.65rem] leading-none font-black">
+                    {facts.proteinGrams.toFixed(facts.proteinGrams % 1 === 0 ? 0 : 1)} g
                   </span>
+                  <span className="text-sm font-semibold">in this</span>
                 </span>
-              ))}
-            </div>
+                <span className="flex items-baseline gap-1 text-base font-bold">
+                  <Flame size={14} className="text-leaf-900" />
+                  ~{Math.round(facts.kcal)} kcal
+                  {facts.millilitres ? <span className="font-semibold text-leaf-900/55"> · {facts.millilitres} ml</span> : null}
+                </span>
+              </p>
+            ) : null}
 
-            <div className="mt-4 flex flex-wrap items-center gap-3">
-              <span className="inline-flex items-center gap-2 text-lg font-extrabold tracking-tight text-[#54104d]">
-                <span className="grid h-8 w-8 place-items-center rounded-full bg-[#faeaf1] text-[#6b245f]">
-                  <Dumbbell size={16} />
-                </span>
-                {facts.proteinGrams.toFixed(facts.proteinGrams % 1 === 0 ? 0 : 1)} g protein
-              </span>
-              <span className="hidden h-5 w-px bg-[#ead3c8] sm:block" aria-hidden />
-              <span className="inline-flex items-center gap-2 text-lg font-extrabold tracking-tight text-[#54104d]">
-                <span className="grid h-8 w-8 place-items-center rounded-full bg-[#faeaf1] text-[#c45c2a]">
-                  <Flame size={16} />
-                </span>
-                ~{Math.round(facts.kcal)} kcal
-              </span>
-              {facts.millilitres ? (
-                <>
-                  <span className="hidden h-5 w-px bg-[#ead3c8] sm:block" aria-hidden />
-                  <span className="text-base font-bold text-[#54104d]">{facts.millilitres} ml</span>
-                </>
-              ) : null}
+            <p className="mt-3 flex items-center gap-1 text-[11px] font-medium text-leaf-900/55">
+              <Heart size={11} className="fill-[#c7ec16] text-leaf-900" />
+              Made with love, health and care
+            </p>
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              {facts?.ingredients?.length
+                ? facts.ingredients.map((item, index) => (
+                    <span
+                      key={`${item.name}-${index}`}
+                      className="rounded-full bg-[#fbf6ee] px-2 py-0.5 text-[11px] font-medium text-leaf-900/80"
+                    >
+                      {item.name}
+                    </span>
+                  ))
+                : highlights
+                    .split('·')
+                    .map((item) => item.trim())
+                    .filter(Boolean)
+                    .map((item) => (
+                      <span key={item} className="rounded-full bg-[#fbf6ee] px-2 py-0.5 text-[11px] font-medium text-leaf-900/80">
+                        {item}
+                      </span>
+                    ))}
             </div>
-            <p className="mt-2 text-[11px] leading-4 text-[#c4a3b2]">Estimated from our recipe, not a lab test.</p>
+            <p className="mt-2.5 text-[11px] leading-5 text-leaf-900/40">
+              Cooked fresh every morning. Estimated from our recipe, not a lab test.
+            </p>
           </div>
         </div>
       )}

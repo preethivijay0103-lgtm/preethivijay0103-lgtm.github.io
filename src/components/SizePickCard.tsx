@@ -113,7 +113,7 @@ export function SizePickCard({
 
           <Link
             to={menuTo}
-            className="mt-3.5 inline-flex min-h-9 items-center justify-center gap-0.5 rounded-full bg-[#54104d] px-3.5 py-2 text-[12px] font-extrabold text-white shadow-[0_4px_12px_rgba(84,16,77,0.22)] transition-all duration-200 hover:bg-[#6a1862] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#54104d] sm:min-h-10 sm:px-4 sm:text-xs"
+            className="mt-4 inline-flex min-h-11 items-center justify-center gap-0.5 rounded-full bg-[#54104d] px-4 py-2.5 text-[13px] font-extrabold text-white shadow-[0_4px_12px_rgba(84,16,77,0.22)] transition-all duration-200 hover:bg-[#6a1862] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#54104d] sm:min-h-10 sm:px-4 sm:text-xs"
           >
             Go to menu
             <ChevronRight size={14} strokeWidth={2.5} className="shrink-0 text-white" />
@@ -158,7 +158,7 @@ export function HomeSizePicker({
 
   return (
     <section className={`bg-[#faf7f1] ${className}`}>
-      <div className="px-3 pt-2 text-center sm:px-5">
+      <div className="px-3 pt-4 text-center sm:px-5">
         <div className="flex items-center justify-center gap-2.5">
           <Spark inline className="h-4 w-4 -rotate-[22deg] text-[#c7ec16]" />
           <h2 className="font-display text-[1.7rem] leading-none font-black tracking-tight text-[#54104d] sm:text-3xl">
@@ -190,7 +190,7 @@ export function HomeSizePicker({
 
       <TabTransition
         transitionKey={diet}
-        className={`flex flex-col gap-3 px-3 pb-5 sm:gap-3.5 sm:px-5 sm:pb-6 ${showDietToggle ? 'mt-3 sm:mt-4' : 'mt-4 sm:mt-5'}`}
+        className={`flex flex-col gap-4 px-3 pb-2 sm:gap-4 sm:px-5 sm:pb-6 ${showDietToggle ? 'mt-4 sm:mt-5' : 'mt-6 sm:mt-7'}`}
       >
         {sizes.map((size) => (
           <SizePickCard

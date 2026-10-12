@@ -7,6 +7,7 @@ import { HomeHotZone } from '../components/HomeHotZone'
 import { HomeStickyTrialCta } from '../components/HomeStickyTrialCta'
 import { HomeWeekCarousel } from '../components/HomeWeekCarousel'
 import { HomeSizePicker } from '../components/SizePickCard'
+import { HomeFaq } from '../components/HomeFaq'
 import { HomeMobile } from './home/HomeMobile'
 import { ButtonLink, Card } from '../ui'
 
@@ -235,6 +236,12 @@ export function Home() {
               )}
             </div>
           </div>
+        </div>
+      </HomeHotZone>
+
+      <HomeHotZone zone="faq" className="bg-cream py-8 sm:py-10">
+        <div className="mx-auto max-w-2xl px-4 sm:px-6">
+          <HomeFaq />
         </div>
       </HomeHotZone>
 
