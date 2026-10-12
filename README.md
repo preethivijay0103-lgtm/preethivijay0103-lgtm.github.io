@@ -33,23 +33,21 @@ npm run build    # makes the site in dist/
 
 Both are already set up so links like `/menu` work when opened directly.
 
-## Optional: keep a list of customers in Google Sheets
+## Google Sheet (orders)
 
-1. Make a Google Sheet, then Extensions, Apps Script, and paste:
+Kitchen sheet: https://docs.google.com/spreadsheets/d/1FCfv7IDKTj0A11EJRmeAE85lv3QiWBlzH_VLln4xEhk
 
-   ```js
-   function doPost(e) {
-     const data = JSON.parse(e.postData.contents)
-     SpreadsheetApp.getActiveSheet().appendRow([
-       data.sentAt, data.name, data.phone, data.area, data.size, data.diet,
-       data.eatsEgg, data.plan, data.start, data.total, data.notes,
-     ])
-     return ContentService.createTextOutput('ok')
-   }
-   ```
+The spreadsheet link itself cannot receive orders. You must deploy the Apps Script once:
 
-2. Deploy it as a web app (access: anyone) and paste the URL into `sheetWebhookUrl` in
-   `src/config/brand.ts`.
+1. Open that sheet → **Extensions** → **Apps Script**.
+2. Delete the default code. Paste `scripts/orders-sheet.gs`. Save.
+3. **Deploy** → **New deployment** → type **Web app**.
+   - Execute as: **Me**
+   - Who has access: **Anyone**
+4. Copy the web app URL (`https://script.google.com/macros/s/.../exec`).
+5. Paste it into `sheetWebhookUrl` in `src/config/brand.ts`, then rebuild the site.
+
+Each WhatsApp order also appends a row: diet, size, protein, days, list price, 30% off on the **final** amount, pay amount.
 
 ## Later, at more than 50 customers
 

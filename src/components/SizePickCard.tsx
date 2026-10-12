@@ -1,22 +1,68 @@
-import { ArrowRight, Crown, Leaf } from 'lucide-react'
-import {
-  LAUNCH_OFF_PERCENT,
-  PRICE_PER_DAY,
-  SIZES,
-  formatRupees,
-  salePricePerDay,
-} from '../features/catalog/data'
-import type { Size } from '../features/catalog/data'
-import { ButtonLink } from '../ui'
+import { ChevronRight, Zap } from 'lucide-react'
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
 
-const PHOTOS: Record<Size, string> = {
-  lean: '/images/size-lean-box.png?v=4',
-  build: '/images/size-build-box.png?v=4',
+import { TabTransition } from './TabTransition'
+import { CUSTOMIZATION_ENABLED } from '../config/customization'
+import { SIZES } from '../features/catalog/data'
+import type { Diet, Size } from '../features/catalog/data'
+import { Toggle } from '../ui'
+
+const COPY: Record<Size, string> = {
+  core: 'A simple, balanced breakfast box for everyday mornings.',
+  strong: 'More protein and a fuller portion for active mornings.',
+  elite: 'Our highest-protein box with the biggest portion.',
 }
 
-function Spark({ className }: { className: string }) {
+const TRAY: Record<Size, Record<Diet, string>> = {
+  core: {
+    nonveg: '/images/size-lean-box.png?v=5',
+    veg: '/images/plates/mon-lean-veg.png?v=2',
+  },
+  strong: {
+    nonveg: '/images/size-lean-box.png?v=5',
+    veg: '/images/plates/tue-lean-veg.png?v=2',
+  },
+  elite: {
+    nonveg: '/images/size-build-box.png?v=5',
+    veg: '/images/plates/fri-lean-veg.png?v=2',
+  },
+}
+
+const THEME: Record<
+  Size,
+  {
+    card: string
+    spark: string
+  }
+> = {
+  core: {
+    card: 'border-2 border-[#c7ec16]/75 bg-[#f3fae3]',
+    spark: 'text-[#b5dc14]',
+  },
+  strong: {
+    card: 'border-2 border-[#ead7a8] bg-[#fff8ea]',
+    spark: 'text-[#e8b923]',
+  },
+  elite: {
+    card: 'border-2 border-[#f3b4dc]/85 bg-[#fdf0f7]',
+    spark: 'text-[#e59cc9]',
+  },
+}
+
+function Spark({
+  className = '',
+  inline = false,
+}: {
+  className?: string
+  inline?: boolean
+}) {
   return (
-    <svg aria-hidden viewBox="0 0 24 24" className={`pointer-events-none absolute ${className}`}>
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className={inline ? `shrink-0 ${className}` : `pointer-events-none absolute ${className}`}
+    >
       <path
         fill="currentColor"
         d="M12 0.6 13.7 9.1 22.4 10.8 13.7 12.5 12 21.2 10.3 12.5 1.6 10.8 10.3 9.1Z"
@@ -25,141 +71,136 @@ function Spark({ className }: { className: string }) {
   )
 }
 
-export function SizePickCard({ size }: { size: Size }) {
-  const isBuild = size === 'build'
+export function SizePickCard({
+  size,
+  diet,
+  menuLinkWithDiet = true,
+}: {
+  size: Size
+  diet: Diet
+  /** Home / size step: link with size only; diet is chosen on the week menu. */
+  menuLinkWithDiet?: boolean
+}) {
   const spec = SIZES[size]
+  const traySrc = TRAY[size][diet]
+  const theme = THEME[size]
+  const menuTo = menuLinkWithDiet ? `/menu?size=${size}&diet=${diet}` : `/menu?size=${size}`
 
   return (
-    <article
-      className={
-        isBuild
-          ? 'relative overflow-hidden rounded-[1.75rem] bg-leaf-900 p-5 text-cream shadow-[0_18px_40px_rgba(70,25,67,0.22)] sm:p-6'
-          : 'relative overflow-hidden rounded-[1.75rem] border-2 border-leaf-900 bg-[#f6efe4] px-5 pt-5 pb-4 text-leaf-900 sm:px-6 sm:pt-6 sm:pb-4'
-      }
-    >
-      {isBuild && (
-        <svg
-          className="pointer-events-none absolute inset-0 h-full w-full opacity-40"
-          viewBox="0 0 400 320"
-          preserveAspectRatio="none"
-          aria-hidden
-        >
-          <path d="M0 210 C 80 170 140 250 220 200 S 340 150 400 190 V 320 H 0 Z" fill="#5c2a58" />
-          <path d="M0 250 C 90 210 160 280 250 230 S 350 200 400 240 V 320 H 0 Z" fill="#3a1638" />
-        </svg>
-      )}
+    <article className={`relative isolate overflow-hidden rounded-[1.65rem] ${theme.card}`}>
+      <Spark className={`right-[46%] top-5 z-20 h-4 w-4 rotate-[18deg] ${theme.spark}`} />
+      <Spark className={`right-[51%] top-11 z-20 h-2.5 w-2.5 -rotate-[22deg] ${theme.spark}`} />
+      <Spark className={`right-4 bottom-6 z-20 h-3.5 w-3.5 rotate-[8deg] ${theme.spark}`} />
 
-      <div className="relative z-10 grid grid-cols-[1.15fr_0.85fr] items-start gap-x-3 gap-y-4">
-        <div className="min-w-0">
-          {isBuild && (
-            <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-spice-800 px-3 py-1.5 text-[10px] font-black tracking-[0.1em] text-leaf-900 uppercase">
-              <Crown size={13} strokeWidth={2.5} />
-              Most Popular
-            </div>
-          )}
-
-          <h3
-            className={`font-display font-black leading-none ${
-              isBuild ? 'text-[2.35rem] text-cream sm:text-5xl' : 'text-[2.1rem] text-leaf-900 sm:text-4xl'
-            }`}
-          >
+      <div className="relative grid grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] items-center gap-1 pl-4 pr-2 pt-4 pb-4 sm:pl-6 sm:pr-3 sm:pt-5 sm:pb-5">
+        <div className="relative z-10 min-w-0">
+          <h3 className="font-display text-[2.15rem] leading-[0.95] font-black tracking-tight text-[#54104d] sm:text-[2.75rem]">
             {spec.label}
           </h3>
 
-          <p
-            className={`mt-3 max-w-[13.5rem] leading-snug ${
-              isBuild ? 'text-[15px] text-cream/90' : 'text-sm text-ink/70'
-            }`}
-          >
-            {spec.blurb}
-          </p>
-
-          <p
-            className={`mt-3 flex items-start gap-2 ${
-              isBuild ? 'text-sm font-medium text-cream/90' : 'text-sm text-leaf-900'
-            }`}
-          >
-            <Leaf
-              size={isBuild ? 20 : 18}
-              strokeWidth={2.2}
-              className={isBuild ? 'mt-0.5 text-spice-800' : 'mt-0.5 text-[#5a8a2a]'}
-            />
-            <span className="leading-snug">
-              Veg & non-veg
-              <br />
-              same price
+          <div className="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-white/80 py-1 pl-1 pr-2.5 text-[#54104d] ring-1 ring-[#54104d]/8">
+            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#fff6e0]">
+              <Zap size={14} fill="#f5ba22" className="text-[#f5ba22]" />
             </span>
+            <span className="whitespace-nowrap text-[12px] font-extrabold sm:text-sm">
+              {spec.proteinGrams} g protein
+            </span>
+          </div>
+
+          <p className="mt-2.5 max-w-[13.5rem] text-[13px] leading-[1.45] font-medium text-[#886985] sm:text-sm">
+            {COPY[size]}
           </p>
 
-          <ButtonLink
-            to="/register"
-            variant={isBuild ? 'primary' : 'secondary'}
-            className={
-              isBuild
-                ? 'mt-4 !bg-spice-800 !px-6 !py-3 !text-sm !font-black !text-leaf-900 !shadow-none hover:!bg-spice-600'
-                : 'mt-4 border-2 border-leaf-900 !bg-[#f6efe4] !px-5 !py-2.5 !text-sm !font-bold !text-leaf-900 hover:!bg-leaf-900 hover:!text-spice-800'
-            }
+          <Link
+            to={menuTo}
+            className="mt-3.5 inline-flex min-h-9 items-center justify-center gap-0.5 rounded-full bg-[#54104d] px-3.5 py-2 text-[12px] font-extrabold text-white shadow-[0_4px_12px_rgba(84,16,77,0.22)] transition-all duration-200 hover:bg-[#6a1862] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#54104d] sm:min-h-10 sm:px-4 sm:text-xs"
           >
-            Choose {spec.label} <ArrowRight size={isBuild ? 18 : 16} strokeWidth={2.5} />
-          </ButtonLink>
+            Go to menu
+            <ChevronRight size={14} strokeWidth={2.5} className="shrink-0 text-white" />
+          </Link>
+
+          {CUSTOMIZATION_ENABLED && (
+            <Link
+              to={`/menu?view=custom&size=${size}&diet=${diet}`}
+              className="mt-2 inline-flex min-h-9 items-center justify-center gap-0.5 rounded-full bg-[#c7ec16] px-3.5 py-2 text-[12px] font-extrabold text-[#54104d] sm:text-xs"
+            >
+              Build your box
+              <ChevronRight size={14} strokeWidth={2.5} className="shrink-0" />
+            </Link>
+          )}
         </div>
 
-        <div className="relative text-right">
-          {isBuild && (
-            <>
-              <Spark className="top-[6.4rem] -left-1 h-4 w-4 rotate-[18deg] text-spice-800" />
-              <Spark className="top-[7.2rem] -right-0.5 h-3.5 w-3.5 -rotate-[12deg] text-spice-800" />
-            </>
-          )}
-
-          <span className={`block text-sm line-through ${isBuild ? 'text-cream/45' : 'text-ink/35'}`}>
-            {formatRupees(PRICE_PER_DAY[size])}
-          </span>
-          <span
-            className={`font-display mt-0.5 block font-black leading-none ${
-              isBuild ? 'text-[2.6rem] text-spice-800 sm:text-5xl' : 'text-[2.15rem] text-leaf-900 sm:text-4xl'
-            }`}
-          >
-            {formatRupees(salePricePerDay(size))}
-          </span>
-          <span
-            className={`mt-1.5 block text-[9px] font-extrabold tracking-[0.16em] uppercase whitespace-nowrap ${
-              isBuild ? 'text-cream/75' : 'text-ink/45'
-            }`}
-          >
-            First month {LAUNCH_OFF_PERCENT}% off
-          </span>
-
-          {isBuild ? (
-            <div className="mt-3 flex items-end justify-end gap-1">
-              <span className="font-display text-[3.7rem] leading-[0.8] font-black text-spice-800 sm:text-6xl">
-                {spec.proteinGrams}
-              </span>
-              <div className="pb-1 text-left">
-                <span className="font-display block text-3xl leading-none font-black text-spice-800">g</span>
-                <span className="mt-0.5 block text-[10px] font-black tracking-[0.12em] text-spice-800 uppercase">
-                  Protein
-                </span>
-              </div>
-            </div>
-          ) : (
-            <p className="mt-1 font-display text-[1.85rem] leading-none font-black whitespace-nowrap text-leaf-900">
-              {spec.proteinGrams} g{' '}
-              <span className="text-xs font-extrabold tracking-[0.14em] uppercase">Protein</span>
-            </p>
-          )}
-
+        <div className="relative min-h-[9.5rem] min-w-0 self-stretch sm:min-h-[11rem]">
           <img
-            src={PHOTOS[size]}
+            key={`${size}-${diet}`}
+            src={traySrc}
             alt={`${spec.label} breakfast box`}
-            className={
-              isBuild
-                ? '-mt-5 -mr-2 ml-auto block h-48 w-[12.5rem] object-contain object-right sm:-mt-6 sm:h-56 sm:w-[14rem]'
-                : '-mt-3 -mb-1 -mr-2 ml-auto block h-36 w-[11rem] object-contain object-right sm:h-40 sm:w-[12rem]'
-            }
+            loading="lazy"
+            className="pointer-events-none absolute inset-0 h-full w-[118%] max-w-none object-contain object-right drop-shadow-[0_10px_16px_rgba(74,29,72,0.12)]"
           />
         </div>
       </div>
     </article>
+  )
+}
+
+export function HomeSizePicker({
+  className = '',
+  showDietToggle = true,
+}: {
+  className?: string
+  /** When false, only box size is chosen; diet is set on the week menu. */
+  showDietToggle?: boolean
+}) {
+  const [diet, setDiet] = useState<Diet>('nonveg')
+
+  const sizes: Size[] = ['core', 'strong', 'elite']
+
+  return (
+    <section className={`bg-[#faf7f1] ${className}`}>
+      <div className="px-3 pt-2 text-center sm:px-5">
+        <div className="flex items-center justify-center gap-2.5">
+          <Spark inline className="h-4 w-4 -rotate-[22deg] text-[#c7ec16]" />
+          <h2 className="font-display text-[1.7rem] leading-none font-black tracking-tight text-[#54104d] sm:text-3xl">
+            Choose your breakfast
+          </h2>
+          <Spark inline className="h-4 w-4 rotate-[18deg] text-[#c7ec16]" />
+        </div>
+        <p className="mt-2 text-[13px] font-medium text-[#886985] sm:text-sm">
+          Same menu. Different portions to match your appetite.
+        </p>
+      </div>
+
+      {showDietToggle ? (
+        <div className="px-3 pt-3 sm:px-5">
+          <Toggle
+            label="Diet"
+            tone="highlight"
+            fill
+            className="min-h-11"
+            value={diet}
+            onChange={setDiet}
+            options={[
+              { value: 'nonveg', label: 'Non-veg' },
+              { value: 'veg', label: 'Veg' },
+            ]}
+          />
+        </div>
+      ) : null}
+
+      <TabTransition
+        transitionKey={diet}
+        className={`flex flex-col gap-3 px-3 pb-5 sm:gap-3.5 sm:px-5 sm:pb-6 ${showDietToggle ? 'mt-3 sm:mt-4' : 'mt-4 sm:mt-5'}`}
+      >
+        {sizes.map((size) => (
+          <SizePickCard
+            key={size}
+            size={size}
+            diet={diet}
+            menuLinkWithDiet={showDietToggle}
+          />
+        ))}
+      </TabTransition>
+    </section>
   )
 }

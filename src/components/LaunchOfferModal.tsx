@@ -1,7 +1,7 @@
 import { PartyPopper, Sparkles, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LAUNCH_OFF_PERCENT } from '../features/catalog/data'
+import { CUSTOMIZATION_ENABLED } from '../config/customization'
 import { Button } from '../ui'
 
 const SESSION_KEY = 'lite-weight-launch-offer-v2'
@@ -94,12 +94,14 @@ export function LaunchOfferModal() {
         </div>
         <p className="mt-4 text-sm font-extrabold tracking-[0.18em] text-leaf-900/55 uppercase">Yay, we are live</p>
         <h2 id="launch-offer-title" className="mt-1 font-display text-6xl font-black leading-none text-leaf-900">
-          {LAUNCH_OFF_PERCENT}% off
-          <span className="mt-1 block font-display text-3xl italic font-black text-leaf-900">on ur order</span>
+          Launch prices
+          <span className="mt-1 block font-display text-3xl italic font-black text-leaf-900">on full boxes</span>
         </h2>
         <p className="mt-3 inline-flex items-center justify-center gap-1 text-sm font-semibold text-leaf-900/80">
           <Sparkles size={16} className="text-leaf-900" />
-          A little celebration while we start
+          {CUSTOMIZATION_ENABLED
+            ? 'Core 25% · Strong & Elite 30%. Custom add-ons stay full price.'
+            : 'Core 25% · Strong & Elite 30%.'}
         </p>
         <div className="mt-6 grid gap-2">
           <Button
@@ -109,7 +111,7 @@ export function LaunchOfferModal() {
               navigate('/register')
             }}
           >
-            Grab 30% off
+            Grab launch prices
           </Button>
           <Button variant="ghost" className="w-full" onClick={close}>
             Keep browsing

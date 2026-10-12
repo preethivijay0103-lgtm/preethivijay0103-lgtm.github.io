@@ -1,19 +1,21 @@
 import { Dumbbell, Drumstick, GlassWater, Layers, Leaf, Salad, Soup } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { compartmentsFor, photoFor } from '../features/catalog/data'
+import { SIZES, compartmentsFor, photoFor } from '../features/catalog/data'
 import type { DayMenu, Diet, Size } from '../features/catalog/data'
 
 export function MobileMenuCard({ day, size, diet }: { day: DayMenu; size: Size; diet: Diet }) {
   const photo = photoFor(day, size, diet)
-  const protein = Math.round(day.proteinGrams[diet][size])
-  const rows: { label: string; name: string; icon: LucideIcon }[] = [
-    ...compartmentsFor(day, size, diet).map((part) => ({
-      label: part.label,
-      name: part.items.join(', '),
-      icon: iconFor(part.label, diet),
-    })),
-    { label: 'Drink', name: day.drink.name, icon: GlassWater },
-  ]
+  const protein = SIZES[size].proteinGrams
+  const rows: { label: string; name: string; highlights: string; icon: LucideIcon }[] = compartmentsFor(
+    day,
+    size,
+    diet,
+  ).map((part) => ({
+    label: part.label,
+    name: part.items.join(', '),
+    highlights: part.highlights,
+    icon: iconFor(part.label, diet),
+  }))
 
   return (
     <article id={`${day.id}-mobile`} className="scroll-mt-40 overflow-hidden rounded-[1.75rem] bg-white shadow-sm ring-1 ring-black/5">
@@ -27,7 +29,7 @@ export function MobileMenuCard({ day, size, diet }: { day: DayMenu; size: Size; 
         <ul className="mt-3">
           {rows.map((row) => {
             const Icon = row.icon
-            const featured = row.label === 'Main'
+            const featured = row.label === 'Main + Side'
             return (
               <li
                 key={row.label}
@@ -41,6 +43,7 @@ export function MobileMenuCard({ day, size, diet }: { day: DayMenu; size: Size; 
                 <div className="min-w-0 flex-1">
                   <p className="text-[10px] font-bold tracking-[0.16em] text-stone-400 uppercase">{row.label}</p>
                   <p className={`leading-snug font-semibold text-leaf-900 ${featured ? 'text-lg' : 'text-base'}`}>{row.name}</p>
+                  {row.highlights ? <p className="mt-1 text-xs leading-5 text-stone-500">{row.highlights}</p> : null}
                 </div>
               </li>
             )
@@ -54,6 +57,7 @@ export function MobileMenuCard({ day, size, diet }: { day: DayMenu; size: Size; 
 function iconFor(label: string, diet: Diet): LucideIcon {
   if (label === 'Salad') return Salad
   if (label === 'Protein') return diet === 'nonveg' ? Drumstick : Leaf
-  if (label === 'Side') return Soup
+  if (label === 'Drink') return GlassWater
+  if (label === 'Sauce' || label === 'Side') return Soup
   return Layers
 }

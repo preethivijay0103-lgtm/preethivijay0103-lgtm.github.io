@@ -74,3 +74,20 @@ export function formatDay(iso: string): string {
   const date = toUtcMidnight(iso)
   return `${DAY_NAMES[date.getUTCDay()]} ${date.getUTCDate()} ${MONTH_NAMES[date.getUTCMonth()]}`
 }
+
+const WEEKDAY_ID: Record<number, 'mon' | 'tue' | 'wed' | 'thu' | 'fri'> = {
+  1: 'mon',
+  2: 'tue',
+  3: 'wed',
+  4: 'thu',
+  5: 'fri',
+}
+
+export function isoWeekdayId(iso: string): 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | null {
+  return WEEKDAY_ID[toUtcMidnight(iso).getUTCDay()] ?? null
+}
+
+export function nextDateForDay(dayId: 'mon' | 'tue' | 'wed' | 'thu' | 'fri', now: Date): string | null {
+  const want = { mon: 1, tue: 2, wed: 3, thu: 4, fri: 5 }[dayId]
+  return startOptions(now, 10).find((iso) => toUtcMidnight(iso).getUTCDay() === want) ?? null
+}

@@ -1,10 +1,13 @@
-import { ChefHat, Dumbbell, Flame } from 'lucide-react'
-import { Link } from 'react-router-dom'
-import { WEEK } from '../../features/catalog/data'
+import { ArrowRight, ChefHat, Dumbbell, Flame } from 'lucide-react'
+import { HomeWeekCarousel } from '../../components/HomeWeekCarousel'
+import { HomeSizePicker } from '../../components/SizePickCard'
 import { HeroBannerMobile } from '../../components/HeroBannerMobile'
 import { HomeHotZone } from '../../components/HomeHotZone'
-import { SizePickCard } from '../../components/SizePickCard'
+import { formatRupees, planTotal } from '../../features/catalog/data'
 import { ButtonLink, Card } from '../../ui'
+
+/** Home week strip (carousel + trial / full-week buttons). Set true to show again. */
+const SHOW_HOME_WEEK_PREVIEW = false
 
 const FACTS = [
   { icon: ChefHat, title: 'Cooked at 4:30 am', text: 'Made fresh every morning.' },
@@ -38,34 +41,14 @@ export function HomeMobile({ leanPrice, buildPrice }: Props) {
         </div>
       </HomeHotZone>
 
+      {SHOW_HOME_WEEK_PREVIEW && (
       <HomeHotZone zone="menu" className="bg-white py-8">
         <div className="mx-auto max-w-7xl px-4">
-          <p className="text-[10px] font-bold tracking-[0.24em] text-leaf-900 uppercase">Menu</p>
-          <h2 className="mt-1 font-display text-2xl font-black text-leaf-900 sm:text-3xl">This week&apos;s boxes</h2>
+          <p className="text-[10px] font-bold tracking-[0.24em] text-leaf-900 uppercase">This week</p>
+          <h2 className="mt-1 font-display text-2xl font-black text-leaf-900 sm:text-3xl">Monday to Friday</h2>
+          <p className="mt-2 text-sm text-ink/75">Swipe Strong this week — veg preview.</p>
 
-          <div
-            className="-mx-4 mt-5 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain px-4 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-            aria-label="Swipe through this week's boxes"
-          >
-            {WEEK.map((day, index) => (
-              <Link
-                key={day.id}
-                to={`/menu#${day.id}`}
-                className="group relative w-52 shrink-0 snap-start"
-                style={{ transform: `rotate(${(index - 2) * 1.5}deg)` }}
-              >
-                <img
-                  src={`${day.images.lean.veg}?v=8`}
-                  alt={`${day.name} breakfast box`}
-                  className="aspect-[4/3] w-full rounded-[1.4rem] bg-[#f4f1ea] object-contain shadow-lg transition duration-300 group-active:-translate-y-1 group-active:shadow-xl"
-                  loading="lazy"
-                />
-                <div className="absolute right-2 bottom-2 left-2 rounded-2xl bg-cream/95 px-3 py-2.5">
-                  <p className="font-display text-sm font-semibold tracking-[0.12em] text-leaf-900 uppercase">{day.name}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
+          <HomeWeekCarousel className="mt-4" />
 
           <div className="mt-5 grid gap-2">
             <ButtonLink to="/register" className="home-pulse w-full justify-center py-3.5">
@@ -77,13 +60,25 @@ export function HomeMobile({ leanPrice, buildPrice }: Props) {
           </div>
         </div>
       </HomeHotZone>
+      )}
 
-      <HomeHotZone zone="pricing" className="bg-cream py-8">
+      <HomeHotZone zone="pricing" className="bg-white py-9">
+        <div className="mx-auto max-w-md px-3">
+          <HomeSizePicker showDietToggle={false} className="rounded-none bg-transparent" />
+        </div>
+      </HomeHotZone>
+
+      <HomeHotZone zone="closing" className="bg-cream pb-10 pt-2">
         <div className="mx-auto max-w-md px-4">
-          <h2 className="font-display text-2xl font-black text-leaf-900">Pick your box.</h2>
-          <div className="mt-5 space-y-4">
-            <SizePickCard size="lean" />
-            <SizePickCard size="build" />
+          <div className="checks-lime rounded-[1.35rem] px-5 py-7 text-center text-leaf-900">
+            <h3 className="font-display text-xl font-black">Try three mornings</h3>
+            <p className="mt-2 text-sm font-medium leading-relaxed">
+              {formatRupees(planTotal('core', 'trial'))} Core · {formatRupees(planTotal('strong', 'trial'))} Strong ·{' '}
+              {formatRupees(planTotal('elite', 'trial'))} Elite
+            </p>
+            <ButtonLink to="/register" className="home-pulse mt-5 w-full justify-center py-3.5 !bg-leaf-900 !text-spice-800">
+              Start trial <ArrowRight size={16} />
+            </ButtonLink>
           </div>
         </div>
       </HomeHotZone>

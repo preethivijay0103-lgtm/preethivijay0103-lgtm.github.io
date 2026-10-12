@@ -17,7 +17,7 @@ export function HomeStickyTrialCta() {
 
   if (!visible) return null
 
-  const trial = formatRupees(planTotal('lean', 'trial'))
+  const trial = formatRupees(planTotal('core', 'trial'))
 
   return (
     <div

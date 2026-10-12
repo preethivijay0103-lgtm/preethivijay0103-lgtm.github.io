@@ -1,5 +1,6 @@
 import { Bike, CalendarCheck, ChefHat, Flame, MapPin, MessageCircle, Utensils } from 'lucide-react'
 import { brand } from '../config/brand'
+import { CUSTOMIZATION_ENABLED } from '../config/customization'
 import { ButtonLink, Card, Section } from '../ui'
 
 const TIMELINE = [
@@ -17,7 +18,23 @@ const FAQ = [
   { q: 'Which days do you cook?', a: `${brand.pickupDays}. Saturday and Sunday are off.` },
   { q: 'Can I skip a day?', a: `Yes. Tell us on WhatsApp by ${brand.orderCutoff}. That day is not charged and moves to the end of your plan.` },
   { q: 'I am vegetarian but I eat egg.', a: 'Tick "I eat egg" when you register and we will plan your box around it.' },
-  { q: 'Can I choose my drink?', a: 'No. Each morning has its own drink: fermented rice porridge, fruit juice, fermented pearl millet porridge, fermented finger millet porridge, or buttermilk.' },
+  ...(CUSTOMIZATION_ENABLED
+    ? [
+        {
+          q: 'Can I order only some items?',
+          a: 'Yes. Pick Custom on the order form, then tick items by day — for example Monday protein only. Add-on prices are full price from the weekly plan.',
+        },
+        {
+          q: 'Can I choose my drink?',
+          a: 'On a full box, that morning’s drink is included. On Custom you can tick Drink on its own if you want only the drink.',
+        },
+      ]
+    : [
+        {
+          q: 'Can I choose my drink?',
+          a: 'That morning’s drink is included with your full breakfast box.',
+        },
+      ]),
   { q: 'I have an allergy.', a: 'Write it in the notes when you register. Our food uses nuts, dairy, egg and sesame, so please tell us before the first box.' },
   { q: 'How do I pay?', a: 'By UPI on WhatsApp after we confirm your order. There is no online payment on this website yet.' },
 ]

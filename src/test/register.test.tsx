@@ -26,9 +26,9 @@ describe('Register', () => {
     renderRegister()
     expect(screen.getAllByText('₹396').length).toBeGreaterThan(0)
 
-    await userEvent.click(screen.getByRole('radio', { name: /build — 50 g protein/i }))
+    await userEvent.click(screen.getByRole('radio', { name: /elite — 50 g protein/i }))
     await userEvent.click(screen.getByRole('radio', { name: /5-day week/i }))
-    expect(screen.getAllByText('₹765').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('₹800').length).toBeGreaterThan(0)
   })
 
   it('shows the egg option only for veg', async () => {
@@ -36,6 +36,16 @@ describe('Register', () => {
     expect(screen.queryByLabelText(/i eat egg/i)).not.toBeInTheDocument()
     await userEvent.click(screen.getByRole('radio', { name: 'Veg' }))
     expect(screen.getByLabelText(/i eat egg/i)).toBeInTheDocument()
+  })
+
+  it.skip('lets you pick Monday protein only at full add-on price', async () => {
+    renderRegister()
+    await userEvent.click(screen.getByRole('radio', { name: /core — 30 g protein/i }))
+    await userEvent.click(screen.getByRole('radio', { name: /custom pick days/i }))
+    await userEvent.click(screen.getByRole('button', { name: /black pepper chicken/i }))
+    expect(screen.getAllByText('₹100').length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/14 g protein/i).length).toBeGreaterThan(0)
+    expect(screen.getByText(/add-ons at full price/i)).toBeInTheDocument()
   })
 })
 

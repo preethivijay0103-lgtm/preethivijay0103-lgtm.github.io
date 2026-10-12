@@ -3,13 +3,17 @@ import type { FormikErrors, FormikTouched } from 'formik'
 import { CircleCheck, MessageCircle } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import * as yup from 'yup'
 import { brand } from '../config/brand'
-import { DIETS, LAUNCH_OFF_PERCENT, PLANS, SIZES, formatRupees, planTotal, salePricePerDay } from '../features/catalog/data'
+import { CUSTOMIZATION_ENABLED } from '../config/customization'
+import { SLOT_LABEL, SLOTS, addonFor } from '../features/catalog/addons'
+import { DIETS, PLANS, SIZES, WEEK, formatRupees, salePricePerDay } from '../features/catalog/data'
 import type { Diet, PlanId, Size } from '../features/catalog/data'
-import { formatDay, isValidStart, planDates, startOptions } from '../features/order/dates'
-import { loadDetails, saveDetails } from '../features/order/storage'
+import { emptyPicks, hasPicks, orderQuote, togglePick } from '../features/order/custom'
+import { formatDay, isValidStart, nextDateForDay, startOptions } from '../features/order/dates'
+import { sendToSheet } from '../features/order/sheet'
+import { loadDetails, loadMenuDraft, saveDetails } from '../features/order/storage'
 import { orderMessage, whatsappUrl } from '../features/order/whatsapp'
 import type { OrderDetails } from '../features/order/whatsapp'
 import { Button, Card, Section, Toggle, inputClass } from '../ui'
@@ -28,12 +32,29 @@ const schema = yup.object({
     .required('Please enter your mobile number')
     .test('phone', 'Enter a 10-digit Indian mobile number', (value) => /^[6-9]\d{9}$/.test(normalisePhone(value ?? ''))),
   area: yup.string().trim().required('Tell us your area, PG or gym'),
-  start: yup
-    .string()
-    .required('Pick a start day')
-    .test('cutoff', 'This day has passed the 9 pm cutoff. Please pick another day.', (value) =>
-      Boolean(value && isValidStart(value, new Date())),
-    ),
+  start: CUSTOMIZATION_ENABLED
+    ? yup.string().when('plan', {
+        is: 'custom',
+        then: (schema) => schema.optional(),
+        otherwise: (schema) =>
+          schema
+            .required('Pick a start day')
+            .test('cutoff', 'This day has passed the 9 pm cutoff. Please pick another day.', (value) =>
+              Boolean(value && isValidStart(value, new Date())),
+            ),
+      })
+    : yup
+        .string()
+        .required('Pick a start day')
+        .test('cutoff', 'This day has passed the 9 pm cutoff. Please pick another day.', (value) =>
+          Boolean(value && isValidStart(value, new Date())),
+        ),
+  picks: CUSTOMIZATION_ENABLED
+    ? yup.mixed().test('picks', 'Pick at least one item.', function (value) {
+        if (this.parent.plan !== 'custom') return true
+        return hasPicks(value ?? {})
+      })
+    : yup.mixed().optional(),
   notes: yup.string().max(300, 'Please keep notes under 300 characters'),
   policy: yup.boolean().oneOf([true], 'Please accept the Terms, Privacy Policy, and cancellation policy'),
 })
@@ -59,30 +80,37 @@ function Label({ htmlFor, children }: { htmlFor?: string; children: ReactNode })
   )
 }
 
-function sendToSheet(order: OrderDetails) {
-  if (!brand.sheetWebhookUrl) return
-  void fetch(brand.sheetWebhookUrl, {
-    method: 'POST',
-    mode: 'no-cors',
-    body: JSON.stringify({ ...order, total: planTotal(order.size, order.plan), sentAt: new Date().toISOString() }),
-  }).catch(() => undefined)
+function sizeFromQuery(value: string | null): Size | undefined {
+  return value === 'core' || value === 'strong' || value === 'elite' ? value : undefined
+}
+
+function dietFromQuery(value: string | null): Diet | undefined {
+  return value === 'veg' || value === 'nonveg' ? value : undefined
 }
 
 export function Register() {
+  const [searchParams] = useSearchParams()
   const options = useMemo(() => startOptions(new Date()), [])
   const [sentUrl, setSentUrl] = useState<string | null>(null)
 
   const saved = loadDetails()
+  const menuDraft = loadMenuDraft()
+  const querySize = sizeFromQuery(searchParams.get('size'))
+  const queryDiet = dietFromQuery(searchParams.get('diet'))
   const initialValues: FormValues = {
     name: saved.name ?? '',
     phone: saved.phone ?? '',
     area: saved.area ?? '',
-    size: saved.size ?? 'lean',
-    diet: saved.diet ?? 'nonveg',
+    size:
+      querySize ??
+      menuDraft?.size ??
+      (saved.size === 'elite' || saved.size === 'core' || saved.size === 'strong' ? saved.size : 'strong'),
+    diet: queryDiet ?? menuDraft?.diet ?? saved.diet ?? 'nonveg',
     eatsEgg: saved.eatsEgg ?? false,
     drink: 'day',
-    plan: 'trial',
+    plan: CUSTOMIZATION_ENABLED && hasPicks(menuDraft?.picks ?? {}) ? 'custom' : 'trial',
     start: options[0],
+    picks: menuDraft?.picks ?? emptyPicks(),
     notes: saved.notes ?? '',
     policy: false,
   }
@@ -144,7 +172,7 @@ export function Register() {
         }}
       >
         {({ values, errors, touched, setFieldValue, isSubmitting }) => {
-          const dates = planDates(values.start, PLANS[values.plan].days)
+          const quote = orderQuote(values)
           return (
             <Form noValidate className="grid gap-8 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
               <Card className="space-y-6 p-6 sm:p-8">
@@ -187,7 +215,7 @@ export function Register() {
 
                 <div>
                   <Label>Size</Label>
-                  <div role="radiogroup" aria-label="Size" className="grid gap-3 sm:grid-cols-2">
+                  <div role="radiogroup" aria-label="Size" className="grid gap-3 sm:grid-cols-3">
                     {(Object.keys(SIZES) as Size[]).map((size) => (
                       <ChoiceCard
                         key={size}
@@ -221,33 +249,82 @@ export function Register() {
 
                 <div>
                   <Label>Plan</Label>
-                  <div role="radiogroup" aria-label="Plan" className="grid gap-3 sm:grid-cols-2">
-                    {(Object.keys(PLANS) as PlanId[]).map((plan) => (
+                  <div role="radiogroup" aria-label="Plan" className="grid gap-3 sm:grid-cols-3">
+                    {(Object.keys(PLANS) as PlanId[])
+                      .filter((plan) => CUSTOMIZATION_ENABLED || plan !== 'custom')
+                      .map((plan) => (
                       <ChoiceCard
                         key={plan}
                         selected={values.plan === plan}
                         onSelect={() => setFieldValue('plan', plan)}
-                        title={`${PLANS[plan].label}, ${formatRupees(planTotal(values.size, plan))}`}
+                        title={PLANS[plan].label}
                         text={PLANS[plan].note}
                       />
                     ))}
                   </div>
                 </div>
 
-                <div>
-                  <Label htmlFor="start">First box on</Label>
-                  <Field as="select" id="start" name="start" className={inputClass}>
-                    {options.map((day) => (
-                      <option key={day} value={day}>
-                        {formatDay(day)}
-                      </option>
-                    ))}
-                  </Field>
-                  <p className="mt-1 text-xs text-stone-500">
-                    Order by {brand.orderCutoff}. {brand.pickupDays} only.
-                  </p>
-                  <FieldError name="start" errors={errors} touched={touched} />
-                </div>
+                {CUSTOMIZATION_ENABLED && values.plan === 'custom' ? (
+                  <div>
+                    <Label>Custom items</Label>
+                    <p className="mb-3 text-sm text-stone-600">
+                      Tick what you want. Example: Monday protein only. Add-on prices are full price. Protein updates as you add.
+                    </p>
+                    <div className="space-y-4">
+                      {WEEK.map((day) => {
+                        const iso = nextDateForDay(day.id, new Date())
+                        const selected = values.picks[day.id] ?? []
+                        return (
+                          <div key={day.id} className="rounded-2xl ring-1 ring-stone-200 p-4">
+                            <p className="font-semibold text-leaf-900">
+                              {day.name}
+                              {iso ? ` · ${formatDay(iso)}` : ' · too late for this week'}
+                            </p>
+                            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                              {SLOTS.map((slot) => {
+                                const item = addonFor(day.id, slot, values.size, values.diet)
+                                const on = selected.includes(slot)
+                                return (
+                                  <button
+                                    key={slot}
+                                    type="button"
+                                    disabled={!iso}
+                                    onClick={() => setFieldValue('picks', togglePick(values.picks, day.id, slot))}
+                                    className={`rounded-xl p-3 text-left text-sm ${
+                                      on ? 'bg-leaf-50 ring-2 ring-leaf-700' : 'bg-white ring-1 ring-stone-200'
+                                    } disabled:opacity-40`}
+                                  >
+                                    <p className="font-semibold text-leaf-900">{SLOT_LABEL[slot]}</p>
+                                    <p className="text-stone-600">{item.name}</p>
+                                    <p className="mt-1 text-xs font-semibold text-leaf-800">
+                                      {formatRupees(item.price)} · {item.protein} g protein
+                                    </p>
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                    <FieldError name="picks" errors={errors} touched={touched} />
+                  </div>
+                ) : (
+                  <div>
+                    <Label htmlFor="start">First box on</Label>
+                    <Field as="select" id="start" name="start" className={inputClass}>
+                      {options.map((day) => (
+                        <option key={day} value={day}>
+                          {formatDay(day)}
+                        </option>
+                      ))}
+                    </Field>
+                    <p className="mt-1 text-xs text-stone-500">
+                      Order by {brand.orderCutoff}. {brand.pickupDays} only.
+                    </p>
+                    <FieldError name="start" errors={errors} touched={touched} />
+                  </div>
+                )}
 
                 <div>
                   <Label htmlFor="notes">Allergies or notes (optional)</Label>
@@ -268,10 +345,13 @@ export function Register() {
                   <div className="bg-leaf-900 p-6 text-white">
                     <p className="text-sm text-leaf-100">Your order</p>
                     <p className="mt-1 font-display text-4xl font-bold">
-                      {formatRupees(planTotal(values.size, values.plan))}
+                      {formatRupees(quote.pay)}
                     </p>
                     <p className="mt-1 text-sm text-leaf-100">
-                      {PLANS[values.plan].days} x {formatRupees(salePricePerDay(values.size))}, {LAUNCH_OFF_PERCENT}% off while we start
+                      {quote.protein} g protein
+                      {quote.discountPercent
+                        ? ` · list ${formatRupees(quote.list)}, ${quote.discountPercent}% off`
+                        : ' · add-ons at full price'}
                     </p>
                   </div>
                   <dl className="space-y-2 p-6 text-sm">
@@ -281,9 +361,16 @@ export function Register() {
                       label="Food"
                       value={values.diet === 'veg' && values.eatsEgg ? 'Veg (eats egg)' : DIETS[values.diet].label}
                     />
-                    <Row label="Drink" value="That day's drink" />
+                    {values.plan !== 'custom' && <Row label="Drink" value="That day's drink" />}
                     <Row label="Plan" value={PLANS[values.plan].label} />
-                    <Row label="Days" value={dates.map(formatDay).join(', ')} />
+                    <Row label="Days" value={quote.days || 'Pick items'} />
+                    {quote.lines.map((line) => (
+                      <Row
+                        key={`${line.dayId}-${line.slot}`}
+                        label={`${line.dayName} ${SLOT_LABEL[line.slot]}`}
+                        value={`${line.name} · ${formatRupees(line.price)} · ${line.protein} g`}
+                      />
+                    ))}
                     <Row label="Pickup" value={`Gym ${brand.pickupHours}, or delivery ${brand.deliveryHours}`} />
                   </dl>
                   <div className="space-y-4 border-t border-stone-100 p-6">
@@ -309,7 +396,11 @@ export function Register() {
                       type="submit"
                       variant="whatsapp"
                       className="w-full py-4 text-base"
-                      disabled={!values.policy || isSubmitting}
+                      disabled={
+                        !values.policy ||
+                        isSubmitting ||
+                        (CUSTOMIZATION_ENABLED && values.plan === 'custom' && !hasPicks(values.picks))
+                      }
                     >
                       <MessageCircle size={20} /> Send order on WhatsApp
                     </Button>

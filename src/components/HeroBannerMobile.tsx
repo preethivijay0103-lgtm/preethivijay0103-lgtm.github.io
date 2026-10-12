@@ -6,7 +6,7 @@ const HERO_TRAYS_SRC = '/images/hero-trays.png?v=1'
 
 const PERKS = [
   { icon: CupSoda, label: 'Drink included' },
-  { icon: Leaf, label: 'Veg & non-veg same price' },
+  { icon: Leaf, label: 'Same price every day' },
   { icon: Salad, label: 'Fresh every morning' },
   { icon: Bike, label: 'We deliver 8–10 am', highlight: true },
 ] as const

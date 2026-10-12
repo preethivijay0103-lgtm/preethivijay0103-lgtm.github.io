@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom'
-import { LAUNCH_OFF_PERCENT } from '../features/catalog/data'
 
 const PLATES = [
   {
@@ -34,12 +33,12 @@ export function HeroPlates() {
       <Link
         to="/register"
         className="pointer-events-auto absolute top-[47%] left-[69%] z-40 grid h-36 w-36 -translate-x-1/2 -translate-y-1/2 -rotate-[8deg] place-items-center rounded-full bg-spice-800 text-center leading-none text-leaf-900 shadow-lg transition hover:scale-105 hover:shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-cream"
-        aria-label={`${LAUNCH_OFF_PERCENT} percent off on your order`}
+        aria-label="Launch prices on full boxes"
       >
         <span>
-          <span className="block font-display text-4xl font-black">{LAUNCH_OFF_PERCENT}%</span>
-          <span className="mt-0.5 block text-[11px] font-extrabold tracking-wide">off</span>
-          <span className="mt-0.5 block font-display text-sm italic font-black">on ur order</span>
+          <span className="block font-display text-3xl font-black">Launch</span>
+          <span className="mt-0.5 block text-[11px] font-extrabold tracking-wide">prices</span>
+          <span className="mt-0.5 block font-display text-sm italic font-black">on boxes</span>
         </span>
       </Link>
     </div>

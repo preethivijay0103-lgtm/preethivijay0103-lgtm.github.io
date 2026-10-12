@@ -7,6 +7,7 @@ import type { ItemFacts } from '../features/catalog/itemDetails'
 
 const ICONS: Record<string, ComponentType<{ size?: number; className?: string }>> = {
   Main: Layers,
+  'Main + Side': Layers,
   Side: Soup,
   Protein: Drumstick,
   Sauce: Soup,
@@ -17,25 +18,18 @@ const ICONS: Record<string, ComponentType<{ size?: number; className?: string }>
 export function BoxDiagram({ day, size, diet }: { day: DayMenu; size: Size; diet: Diet }) {
   const [openKey, setOpenKey] = useState<string | null>(null)
 
-  const rows = [
-    ...compartmentsFor(day, size, diet).map((part) => ({
+  const rows = compartmentsFor(day, size, diet).map((part) => {
+    const facts = factsFor(day, size, diet, part.label)
+    const name = part.items.join(', ')
+    return {
       key: part.label,
       label: part.label.toUpperCase(),
-      value: part.items.join(', '),
-      highlight: part.label === 'Main',
-      facts: factsFor(day, size, diet, part.label),
-    })),
-    (() => {
-      const facts = factsFor(day, size, diet, 'Drink')
-      return {
-        key: 'Drink',
-        label: 'DRINK',
-        value: facts?.millilitres ? `${day.drink.name}, ${facts.millilitres} ml` : day.drink.name,
-        highlight: false,
-        facts,
-      }
-    })(),
-  ]
+      value: part.label === 'Drink' && facts?.millilitres ? `${name}, ${facts.millilitres} ml` : name,
+      highlights: part.highlights,
+      highlight: part.label === 'Main + Side',
+      facts,
+    }
+  })
 
   return (
     <div className="divide-y divide-[#eee5e1]" aria-label="What is in the box">
@@ -44,6 +38,7 @@ export function BoxDiagram({ day, size, diet }: { day: DayMenu; size: Size; diet
           key={row.key}
           label={row.label}
           value={row.value}
+          highlights={row.highlights}
           highlight={row.highlight}
           iconKey={row.key}
           facts={row.facts}
@@ -58,6 +53,7 @@ export function BoxDiagram({ day, size, diet }: { day: DayMenu; size: Size; diet
 function MenuRow({
   label,
   value,
+  highlights,
   iconKey,
   highlight,
   facts,
@@ -66,6 +62,7 @@ function MenuRow({
 }: {
   label: string
   value: string
+  highlights: string
   iconKey: string
   highlight: boolean
   facts?: ItemFacts
@@ -90,8 +87,9 @@ function MenuRow({
           <p className={`mt-0.5 leading-tight text-[#54104d] ${highlight ? 'text-lg font-bold' : 'text-base font-semibold'}`}>
             {value}
           </p>
+          {highlights ? <p className="mt-1 text-xs leading-5 text-[#8a6278]">{highlights}</p> : null}
           <p className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-[#8a4a7c]">
-            View ingredients & nutrition
+            Protein & kcal
             <ChevronDown size={14} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
           </p>
         </div>

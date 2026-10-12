@@ -1,7 +1,8 @@
 import { brand } from '../../config/brand'
-import { DIETS, PLANS, SIZES, formatRupees, planTotal } from '../catalog/data'
+import { DIETS, PLANS, SIZES, formatRupees } from '../catalog/data'
 import type { Diet, DrinkId, PlanId, Size } from '../catalog/data'
-import { formatDay, planDates } from './dates'
+import { SLOT_LABEL } from '../catalog/addons'
+import { orderQuote, type CustomPicks } from './custom'
 
 export interface OrderDetails {
   name: string
@@ -13,22 +14,33 @@ export interface OrderDetails {
   drink: DrinkId
   plan: PlanId
   start: string
+  picks: CustomPicks
   notes: string
 }
 
 export function orderMessage(order: OrderDetails): string {
-  const dates = planDates(order.start, PLANS[order.plan].days)
+  const quote = orderQuote(order)
   const diet = order.diet === 'veg' && order.eatsEgg ? 'Veg (eats egg)' : DIETS[order.diet].label
+  const itemLines =
+    order.plan === 'custom'
+      ? quote.lines.map(
+          (line) => `${line.dayName} ${SLOT_LABEL[line.slot]}: ${line.name} (${formatRupees(line.price)}, ${line.protein} g)`,
+        )
+      : []
   return [
     'New order: Breakfast box',
     `Name: ${order.name.trim()}`,
     `Phone: ${order.phone}`,
     `Area: ${order.area.trim()}`,
-    `Size: ${SIZES[order.size].label}`,
+    `Size: ${SIZES[order.size].label} (${SIZES[order.size].proteinGrams} g)`,
     `Diet: ${diet}`,
-    `Drink: the day's drink`,
-    `Plan: ${PLANS[order.plan].label}, ${formatDay(dates[0])} to ${formatDay(dates[dates.length - 1])}`,
-    `Total: ${formatRupees(planTotal(order.size, order.plan))}`,
+    `Plan: ${PLANS[order.plan].label}`,
+    `Days: ${quote.days || 'none'}`,
+    ...itemLines,
+    `Protein: ${quote.protein} g`,
+    quote.discountPercent
+      ? `List: ${formatRupees(quote.list)}. ${quote.discountPercent}% off. Pay: ${formatRupees(quote.pay)}`
+      : `Total: ${formatRupees(quote.pay)} (add-ons, full price)`,
     `Allergies or notes: ${order.notes.trim() || 'none'}`,
     'Cancellation policy: accepted',
   ].join('\n')

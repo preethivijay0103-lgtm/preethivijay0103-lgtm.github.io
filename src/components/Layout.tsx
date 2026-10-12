@@ -1,9 +1,11 @@
 import { Clock, Mail, MapPin, Menu as MenuIcon, MessageCircle, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation, useSearchParams } from 'react-router-dom'
 import { PLACEHOLDER_WHATSAPP, brand } from '../config/brand'
+import { isMenuWeekOpen } from '../features/menu/weekParams'
 import { whatsappUrl } from '../features/order/whatsapp'
 import { useIsMobileOrTablet } from '../hooks'
+import { TabTransition } from './TabTransition'
 import { BrandLogo } from './BrandLogo'
 import { LaunchOfferModal } from './LaunchOfferModal'
 import { ButtonLink } from '../ui'
@@ -23,9 +25,10 @@ function navClass({ isActive }: { isActive: boolean }) {
 export function Layout() {
   const [open, setOpen] = useState(false)
   const { pathname } = useLocation()
+  const [searchParams] = useSearchParams()
   const isMobileOrTablet = useIsMobileOrTablet()
-  const showMobileCta = isMobileOrTablet && pathname !== '/register' && pathname !== '/menu'
-
+  const menuWeekOpen = pathname === '/menu' && isMenuWeekOpen(searchParams)
+  const showMobileCta = isMobileOrTablet && pathname !== '/register' && !menuWeekOpen
   useEffect(() => {
     setOpen(false)
     window.scrollTo(0, 0)
@@ -103,7 +106,9 @@ export function Layout() {
       </header>
 
       <main className="flex-1">
-        <Outlet />
+        <TabTransition transitionKey={pathname} className="min-h-full">
+          <Outlet />
+        </TabTransition>
       </main>
       <LaunchOfferModal />
 

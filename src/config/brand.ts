@@ -24,8 +24,9 @@ export const brand = {
   orderCutoff: '9 pm the night before',
   // Public URL for sharing (e.g. https://your-site.netlify.app). Empty = use the browser’s current origin.
   siteUrl: '',
-  // Optional: a Google Apps Script web-app URL that appends a row to a Sheet. Leave empty to skip.
-  sheetWebhookUrl: '',
+  // Kitchen sheet: https://docs.google.com/spreadsheets/d/1FCfv7IDKTj0A11EJRmeAE85lv3QiWBlzH_VLln4xEhk
+  // Apps Script web app. Public in the frontend bundle (append-only).
+  sheetWebhookUrl: 'https://script.google.com/macros/s/AKfycbzwo4abNidlRvQvHwDyPR_NXAquEU2V3v6ODQR70hT4mMBI8q-r0C7iC0oThcK5I3TJ/exec',
 } as const
 
 export const PLACEHOLDER_WHATSAPP = '919999999999'

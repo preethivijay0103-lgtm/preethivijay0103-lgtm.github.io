@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
+import { addonFor } from '../features/catalog/addons'
 import { WEEK, compartmentsFor, photoFor, planTotal } from '../features/catalog/data'
+import { orderQuote } from '../features/order/custom'
 import { earliestStart, formatDay, isValidStart, planDates, startOptions } from '../features/order/dates'
+import { sheetOrderPayload } from '../features/order/sheet'
 import { orderMessage, whatsappUrl } from '../features/order/whatsapp'
 
 // Helper: an instant given as India time.
@@ -10,10 +13,9 @@ function ist(y: number, m: number, d: number, h: number, min = 0): Date {
 
 describe('prices', () => {
   it('totals each size and plan, drink included', () => {
-    expect(planTotal('lean', 'trial')).toBe(396)
-    expect(planTotal('lean', 'week')).toBe(660)
-    expect(planTotal('build', 'trial')).toBe(459)
-    expect(planTotal('build', 'week')).toBe(765)
+    expect(planTotal('core', 'trial')).toBe(357)
+    expect(planTotal('strong', 'trial')).toBe(396)
+    expect(planTotal('elite', 'week')).toBe(800)
   })
 })
 
@@ -54,17 +56,17 @@ describe('dates', () => {
 })
 
 describe('item nutrition', () => {
-  it('shows Lean with fewer kcal than Build on mains', async () => {
+  it('shows Core with fewer kcal than Elite on mains', async () => {
     const { factsFor } = await import('../features/catalog/itemDetails')
     const monday = WEEK[0]
-    const lean = factsFor(monday, 'lean', 'veg', 'Main')
-    const build = factsFor(monday, 'build', 'veg', 'Main')
+    const lean = factsFor(monday, 'core', 'veg', 'Main')
+    const build = factsFor(monday, 'elite', 'veg', 'Main')
     expect(lean?.ingredients.map((item) => item.name)).toEqual([
-      'Black chana',
-      'Green gram',
+      'Black chickpeas',
+      'Green moong',
       'Pearl millet',
-      'Toor dal',
-      'Urad dal',
+      'Toor & urad dal',
+      'Roasted peanut chutney',
     ])
     expect(lean?.kcal).toBe(208)
     expect(build?.kcal).toBe(303)
@@ -73,29 +75,47 @@ describe('item nutrition', () => {
 })
 
 describe('compartments', () => {
-  it('lists main, salad, and protein for Lean and Build', () => {
+  it('lists main, salad, and protein for Core and Elite', () => {
     const monday = WEEK[0]
-    expect(compartmentsFor(monday, 'lean', 'veg').map((part) => part.label)).toEqual([
-      'Main',
-      'Side',
+    expect(compartmentsFor(monday, 'core', 'veg').map((part) => part.label)).toEqual([
+      'Main + Side',
       'Protein',
       'Sauce',
       'Salad',
+      'Drink',
     ])
-    const build = compartmentsFor(monday, 'build', 'veg')
-    expect(build[0].items[0]).toBe('Sprout dosa, 3 dosas')
-    expect(build[1].items).toEqual(['Peanut chutney'])
-    expect(build[2].items).toEqual(['Palak paneer, rajma'])
-    expect(build[3].items).toEqual(['Chipotle sauce'])
+    const build = compartmentsFor(monday, 'elite', 'veg')
+    expect(build[0].items[0]).toBe('Multigrain Dosa + Peanut Chutney')
+    expect(build[1].items).toEqual(['Palak Paneer + Rajma'])
+    expect(build[2].items).toEqual(['Roasted Pepper Yogurt Dip'])
+    expect(build[3].items).toEqual(['Black Chickpea & Peanut Salad'])
+    expect(build[4].items).toEqual(['Fermented Rice'])
   })
 })
 
 describe('photos', () => {
   it('changes the photo when diet or size changes', () => {
     const monday = WEEK[0]
-    expect(photoFor(monday, 'lean', 'veg')).toBe('/images/mon-lean-veg-4.jpg?v=15')
-    expect(photoFor(monday, 'lean', 'nonveg')).toBe('/images/mon-lean-nonveg-4.jpg?v=15')
-    expect(photoFor(monday, 'build', 'veg')).toBe('/images/mon-build-veg-4.jpg?v=15')
+    expect(photoFor(monday, 'core', 'veg')).toBe('/images/mon-lean-veg-4.jpg?v=15')
+    expect(photoFor(monday, 'strong', 'nonveg')).toBe('/images/mon-lean-nonveg-4.jpg?v=15')
+    expect(photoFor(monday, 'elite', 'veg')).toBe('/images/mon-build-veg-4.jpg?v=15')
+  })
+})
+
+describe.skip('custom add-ons', () => {
+  it('prices Monday Core non-veg protein from the weekly plan', () => {
+    expect(addonFor('mon', 'protein', 'core', 'nonveg')).toEqual({
+      name: 'Black Pepper Chicken',
+      price: 100,
+      protein: 14,
+    })
+    const quote = orderQuote(
+      { size: 'core', diet: 'nonveg', plan: 'custom', start: '', picks: { mon: ['protein'] } },
+      ist(2026, 9, 25, 10),
+    )
+    expect(quote.pay).toBe(100)
+    expect(quote.protein).toBe(14)
+    expect(quote.discountPercent).toBe(0)
   })
 })
 
@@ -104,12 +124,13 @@ describe('WhatsApp message', () => {
     name: ' Priya ',
     phone: '+91 9876543210',
     area: 'HSR PG',
-    size: 'lean' as const,
+    size: 'strong' as const,
     diet: 'veg' as const,
     eatsEgg: false,
     drink: 'day' as const,
     plan: 'trial' as const,
     start: '2026-09-29',
+    picks: {},
     notes: '',
   }
 
@@ -120,11 +141,12 @@ describe('WhatsApp message', () => {
         'Name: Priya',
         'Phone: +91 9876543210',
         'Area: HSR PG',
-        'Size: Lean',
+        'Size: Strong (40 g)',
         'Diet: Veg',
-        "Drink: the day's drink",
-        'Plan: 3-day trial, Tue 29 Sep to Thu 1 Oct',
-        'Total: ₹396',
+        'Plan: 3-day trial',
+        'Days: Tue 29 Sep, Wed 30 Sep, Thu 1 Oct',
+        'Protein: 120 g',
+        'List: ₹567. 30% off. Pay: ₹396',
         'Allergies or notes: none',
         'Cancellation policy: accepted',
       ].join('\n'),
@@ -139,5 +161,35 @@ describe('WhatsApp message', () => {
     expect(whatsappUrl('Hi there\n₹387', '919876543210')).toBe(
       'https://wa.me/919876543210?text=Hi%20there%0A%E2%82%B9387',
     )
+  })
+})
+
+describe('Google Sheet payload', () => {
+  it('applies 30% off on the list total and sums protein for the plan', () => {
+    const payload = sheetOrderPayload(
+      {
+        name: ' Priya ',
+        phone: '+91 9876543210',
+        area: 'HSR PG',
+        size: 'strong',
+        diet: 'veg',
+        eatsEgg: false,
+        drink: 'day',
+        plan: 'trial',
+        start: '2026-09-29',
+        picks: {},
+        notes: '',
+      },
+      new Date('2026-09-28T12:00:00.000Z'),
+    )
+    expect(payload.listTotal).toBe(567)
+    expect(payload.discountPercent).toBe(30)
+    expect(payload.payTotal).toBe(396)
+    expect(payload.proteinGramsPerDay).toBe(40)
+    expect(payload.proteinGramsTotal).toBe(120)
+    expect(payload.days).toBe('Tue 29 Sep, Wed 30 Sep, Thu 1 Oct')
+    expect(payload.diet).toBe('veg')
+    expect(payload.phone).toBe('91 9876543210')
+    expect(payload.phone.startsWith('+')).toBe(false)
   })
 })
